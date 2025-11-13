@@ -1,0 +1,38 @@
+name: Release CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t $REGISTRY/fusion:$GITHUB_SHA . # build
+      - name: Run unit tests
+        run: pytest tests/unit # unit tests
+      - name: Create SBOM
+        run: syft -o json $REGISTRY/fusion:$GITHUB_SHA > sbom.json # SBOM
+      - name: Sign image
+        run: cosign sign --key cosign.key $REGISTRY/fusion:$GITHUB_SHA # attestation
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle
+          path: |
+            sbom.json
+            test-results.xml
+  approve_and_deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://k8s.cluster.local
+    steps:
+      - name: Await manual approval
+        uses: peter-evans/repository-dispatch@v2 # manual approver required
+      - name: Deploy canary
+        run: kubectl set image deployment/fusion fusion=$REGISTRY/fusion:$GITHUB_SHA --record
+      - name: Run canary smoke tests
+        run: pytest tests/smoke --canary # smoke tests against canary
+      - name: Promote if healthy
+        if: success()
+        run: kubectl rollout status deployment/fusion && kubectl label deployment/fusion promoted=true
