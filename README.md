@@ -1,7 +1,7 @@
 # Integrating Data Fusion And Cognitive Architectures
 
 ### Cover
-<img src="covers/Front1.png" alt="Book Cover" width="300" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 3px 8px rgba(0,0,0,0.1);"/>
+<img src="covers/Back1.png" alt="Book Cover" width="300" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 3px 8px rgba(0,0,0,0.1);"/>
 
 ### Repository Structure
 - `covers/`: Book cover images
